@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Popup Formas de Pagamento
  * Description: Exibe um popup com as formas de pagamento nos produtos do WooCommerce.
- * Version: 2.2
+ * Version: 2.4
  * Author: ANDREI MOTERLE
  * Text Domain: popup-formas-pagamento
  */
@@ -37,7 +37,11 @@ function pfp_render_modal() {
 
 // Função para gerar tabela de parcelamento
 function gerar_tabela_parcelamento($preco) {
-    $taxasJuros = json_decode(get_option('pfp_interest_rates', '{}'), true);
+    $taxasJuros = get_option('pfp_interest_rates', array());
+    if (!is_array($taxasJuros)) {
+        $taxasJuros = json_decode($taxasJuros, true);
+        if (!is_array($taxasJuros)) $taxasJuros = array();
+    }
     ob_start();
     ?>
     <ul class="modal-parcel-list">
@@ -81,7 +85,12 @@ function pfp_atualizar_parcelamento() {
 
 // Função para obter o maior número de parcelas sem juros
 function pfp_get_parcelas_sem_juros() {
-    $taxasJuros = json_decode(get_option('pfp_interest_rates', '{}'), true);
+    $taxasJuros = get_option('pfp_interest_rates', array());
+    if (!is_array($taxasJuros)) {
+        $taxasJuros = json_decode($taxasJuros, true);
+        if (!is_array($taxasJuros)) $taxasJuros = array();
+    }
+
     $sem_juros = array_filter($taxasJuros, function($taxa) { return floatval($taxa) == 0; });
     if (empty($sem_juros)) return 1;
     return max(array_map('intval', array_keys($sem_juros)));

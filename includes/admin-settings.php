@@ -3,7 +3,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-// Create the admin settings page
+// Cria a página de configurações no admin
 add_action('admin_menu', 'pfp_add_admin_menu');
 function pfp_add_admin_menu() {
     add_menu_page(
@@ -15,24 +15,23 @@ function pfp_add_admin_menu() {
     );
 }
 
-// Register settings
+// Registra as opções
 add_action('admin_init', 'pfp_settings_init');
 function pfp_settings_init() {
     register_setting('pfp_settings_group', 'pfp_interest_rates');
     register_setting('pfp_settings_group', 'pfp_pix_discount');
-    register_setting('pfp_settings_group', 'pfp_boleto_settings');
     register_setting('pfp_settings_group', 'pfp_boleto_discount');
 
     add_settings_section(
         'pfp_settings_section',
-        'Payment Settings',
+        'Formas de Pagamento',
         null,
         'popup-formas-pagamento'
     );
 
     add_settings_field(
         'pfp_interest_rates',
-        'Interest Rates (JSON)',
+        'Taxas de Juros por Parcela (%)',
         'pfp_interest_rates_render',
         'popup-formas-pagamento',
         'pfp_settings_section'
@@ -47,14 +46,6 @@ function pfp_settings_init() {
     );
 
     add_settings_field(
-        'pfp_boleto_settings',
-        'Boleto Payment Settings',
-        'pfp_boleto_settings_render',
-        'popup-formas-pagamento',
-        'pfp_settings_section'
-    );
-
-    add_settings_field(
         'pfp_boleto_discount',
         'Boleto Discount (%)',
         'pfp_boleto_discount_render',
@@ -63,10 +54,24 @@ function pfp_settings_init() {
     );
 }
 
+// Renderiza inputs para cada parcela
 function pfp_interest_rates_render() {
-    $options = get_option('pfp_interest_rates');
-    echo '<textarea rows="5" cols="50" name="pfp_interest_rates">' . esc_textarea($options) . '</textarea>';
-    echo '<p>Enter interest rates as a JSON object, e.g., {"2": 0, "3": 0, "4": 10.86, ...}</p>';
+    $rates = get_option('pfp_interest_rates', array());
+    // Se vier como string (JSON antigo), tenta decodificar
+    if (!is_array($rates)) {
+        $rates = json_decode($rates, true);
+        if (!is_array($rates)) $rates = array();
+    }
+    echo '<table><tr><th>Parcelas</th><th>Taxa de Juros (%)</th></tr>';
+    for ($i = 2; $i <= 12; $i++) {
+        $val = isset($rates[$i]) ? esc_attr($rates[$i]) : '0';
+        echo '<tr>
+            <td>' . $i . 'x</td>
+            <td><input type="number" step="0.01" min="0" name="pfp_interest_rates[' . $i . ']" value="' . $val . '" style="width:80px"></td>
+        </tr>';
+    }
+    echo '</table>';
+    echo '<p>Preencha a taxa de juros para cada quantidade de parcelas. Use 0 para "sem juros".</p>';
 }
 
 function pfp_pix_discount_render() {
@@ -74,28 +79,27 @@ function pfp_pix_discount_render() {
     echo '<input type="number" name="pfp_pix_discount" value="' . esc_attr($options) . '" step="0.01" min="0" max="100" /> %';
 }
 
-function pfp_boleto_settings_render() {
-    $options = get_option('pfp_boleto_settings');
-    echo '<textarea rows="5" cols="50" name="pfp_boleto_settings">' . esc_textarea($options) . '</textarea>';
-    echo '<p>Enter any specific settings for boleto payments.</p>';
-}
-
 function pfp_boleto_discount_render() {
     $options = get_option('pfp_boleto_discount');
     echo '<input type="number" name="pfp_boleto_discount" value="' . esc_attr($options) . '" step="0.01" min="0" max="100" /> %';
 }
 
-// Render the settings page
+// Renderiza a página de configurações
 function pfp_settings_page() {
     ?>
-    <form action="options.php" method="post">
-        <h1>Popup Formas de Pagamento Settings</h1>
+    <form action="options.php" method="post" id="pfp-settings-form">
+        <h1>Popup Formas de Pagamento Configurações</h1>
         <?php
         settings_fields('pfp_settings_group');
         do_settings_sections('popup-formas-pagamento');
         submit_button();
         ?>
     </form>
+    <script>
+    document.getElementById('pfp-settings-form').addEventListener('submit', function() {
+        alert('Configurações salvas com sucesso!');
+    });
+    </script>
     <?php
 }
 ?>

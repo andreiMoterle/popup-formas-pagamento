@@ -35,7 +35,7 @@ To configure the plugin settings:
 You can customize the appearance of the modal by editing the `assets/css/style.css` file. For JavaScript functionality, modify the `assets/js/custom.js` file.
 
 ## Support
-For support, please contact the plugin author at [ANDREI MOTERLE](mailto:your-email@example.com).
+For support, please contact the plugin author at [ANDREI MOTERLE](mailto:andreimoterle@gmail.com).
 
 ## Changelog
 ### Version 2.0
