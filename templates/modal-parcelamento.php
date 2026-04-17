@@ -97,7 +97,7 @@ if (!defined('ABSPATH')) {
                         <?php
                         global $product;
                         if ($product) {
-                            echo gerar_tabela_parcelamento($product->get_price());
+                            echo gerar_tabela_parcelamento(floatval($product->get_price()));
                         }
                         ?>
                         <div style="padding: 5px;width: 100%"></div>
@@ -112,12 +112,13 @@ if (!defined('ABSPATH')) {
                                     <?php
                                     if ($product) {
                                         $pix_discount = floatval(get_option('pfp_pix_discount', 0));
-                                        $pix_price = $product->get_price() * (1 - ($pix_discount / 100));
+                                        $pix_price = floatval($product->get_price()) * (1 - ($pix_discount / 100));
                                         echo wc_price($pix_price);
                                     }
                                     ?>
                                 </div>
                                 <div class="modal-parcel-price-description">
+                                    <?php $pix_discount = floatval(get_option('pfp_pix_discount', 0)); ?>
                                     À vista no PIX<?php if ($pix_discount > 0) { echo " com <strong>{$pix_discount}% OFF</strong>"; } ?>
                                 </div>
                             </div>
@@ -192,12 +193,13 @@ if (!defined('ABSPATH')) {
                                     <?php
                                     if ($product) {
                                         $boleto_discount = floatval(get_option('pfp_boleto_discount', 0));
-                                        $boleto_price = $product->get_price() * (1 - ($boleto_discount / 100));
+                                        $boleto_price = floatval($product->get_price()) * (1 - ($boleto_discount / 100));
                                         echo wc_price($boleto_price);
                                     }
                                     ?>
                                 </div>
                                 <div class="modal-parcel-price-description">
+                                    <?php $boleto_discount = floatval(get_option('pfp_boleto_discount', 0)); ?>
                                     À vista no Boleto<?php if ($boleto_discount > 0) { echo " com <strong>{$boleto_discount}% OFF</strong>"; } ?>
                                 </div>
                             </div>

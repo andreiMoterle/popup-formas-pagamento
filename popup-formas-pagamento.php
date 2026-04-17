@@ -3,8 +3,8 @@
  * Plugin Name: Popup Formas de Pagamento
  * Description: Exibe um popup com as formas de pagamento nos produtos do WooCommerce.
  * Version: 2.4
- * Author: ANDREI MOTERLE
- * Text Domain: popup-formas-pagamento
+ * Author: Andrei Moterle
+ * Author URI: https://github.com/andreiMoterle
  */
 
 if (!defined('ABSPATH')) {
@@ -37,6 +37,7 @@ function pfp_render_modal() {
 
 // Função para gerar tabela de parcelamento
 function gerar_tabela_parcelamento($preco) {
+    $preco = floatval($preco); // Garantir que seja float
     $taxasJuros = get_option('pfp_interest_rates', array());
     if (!is_array($taxasJuros)) {
         $taxasJuros = json_decode($taxasJuros, true);
@@ -104,12 +105,28 @@ function pfp_get_parcelas_sem_juros() {
  * @return string|null
  */
 function pfp_exibir_valor_parcelado($preco, $class = 'preco-parcelado', $echo = true) {
+    $preco = floatval($preco); // Garantir que seja float
     $parcelas = pfp_get_parcelas_sem_juros();
     if ($parcelas < 2) return null;
 
-    $valor_parcela = $preco / $parcelas;
-    $valor_parcela_formatado = wc_price($valor_parcela);
-    $html = '<p class="' . esc_attr($class) . '">Ou ' . $parcelas . 'x de ' . $valor_parcela_formatado . ' sem juros</p>';
+    $enable_complete_info = get_option('pfp_enable_complete_info');
+    
+    if ($enable_complete_info) {
+        // Formato completo: "R$ 218,41 no Pix ou 6x de R$ 38,32 sem juros"
+        $pix_discount = floatval(get_option('pfp_pix_discount', 0));
+        $pix_price = $preco * (1 - ($pix_discount / 100));
+        $valor_parcela = $preco / $parcelas;
+        
+        $pix_formatado = wc_price($pix_price);
+        $valor_parcela_formatado = wc_price($valor_parcela);
+        
+        $html = '<p class="' . esc_attr($class) . '">' . $pix_formatado . ' no Pix ou ' . $parcelas . 'x de ' . $valor_parcela_formatado . ' sem juros</p>';
+    } else {
+        // Formato simples: "Ou 6x de R$ 38,32 sem juros"
+        $valor_parcela = $preco / $parcelas;
+        $valor_parcela_formatado = wc_price($valor_parcela);
+        $html = '<p class="' . esc_attr($class) . '">Ou ' . $parcelas . 'x de ' . $valor_parcela_formatado . ' sem juros</p>';
+    }
 
     if ($echo) {
         echo $html;
@@ -118,27 +135,63 @@ function pfp_exibir_valor_parcelado($preco, $class = 'preco-parcelado', $echo = 
     return $html;
 }
 
-// Página do produto
+// Página do produto (só se auto display estiver habilitado)
 function pfp_mostrar_preco_parcelado() {
+    if (!get_option('pfp_enable_auto_display')) return;
     global $product;
     if (!$product) return;
-    pfp_exibir_valor_parcelado($product->get_price(), 'preco-parcelado', true);
+    $preco = floatval($product->get_price());
+    pfp_exibir_valor_parcelado($preco, 'preco-parcelado', true);
 }
 add_action('woocommerce_single_product_summary', 'pfp_mostrar_preco_parcelado', 15);
 
-// Listagem de produtos
+// Listagem de produtos (só se auto display estiver habilitado)
 function pfp_mostrar_preco_parcelado_em_listagem() {
+    if (!get_option('pfp_enable_auto_display')) return;
     global $product;
     if (!$product) return;
-    pfp_exibir_valor_parcelado($product->get_price(), 'preco-parcelado-listagem', true);
+    $preco = floatval($product->get_price());
+    pfp_exibir_valor_parcelado($preco, 'preco-parcelado-listagem', true);
 }
 add_action('woocommerce_after_shop_loop_item_title', 'pfp_mostrar_preco_parcelado_em_listagem', 15);
 
 // Shortcode
-function pfp_shortcode_valor_parcelado() {
+function pfp_shortcode_valor_parcelado($atts) {
+    $atts = shortcode_atts(array(
+        'class' => 'preco-parcelado-shortcode',
+        'preco' => null
+    ), $atts);
+    
     global $product;
-    if (!$product) return '';
-    return pfp_exibir_valor_parcelado($product->get_price(), 'preco-parcelado-listagem', false);
+    if (!$product && !$atts['preco']) return '';
+    
+    $preco = $atts['preco'] ? floatval($atts['preco']) : floatval($product->get_price());
+    return pfp_exibir_valor_parcelado($preco, $atts['class'], false);
 }
 add_shortcode('valor_parcelado', 'pfp_shortcode_valor_parcelado');
+
+// Shortcode específico para informações completas
+function pfp_shortcode_info_completa($atts) {
+    $atts = shortcode_atts(array(
+        'class' => 'info-pagamento-completa',
+        'preco' => null
+    ), $atts);
+    
+    global $product;
+    if (!$product && !$atts['preco']) return '';
+    
+    $preco = $atts['preco'] ? floatval($atts['preco']) : floatval($product->get_price());
+    $parcelas = pfp_get_parcelas_sem_juros();
+    if ($parcelas < 2) return '';
+
+    $pix_discount = floatval(get_option('pfp_pix_discount', 0));
+    $pix_price = $preco * (1 - ($pix_discount / 100));
+    $valor_parcela = $preco / $parcelas;
+    
+    $pix_formatado = wc_price($pix_price);
+    $valor_parcela_formatado = wc_price($valor_parcela);
+    
+    return '<p class="' . esc_attr($atts['class']) . '">' . $pix_formatado . ' no Pix ou ' . $parcelas . 'x de ' . $valor_parcela_formatado . ' sem juros</p>';
+}
+add_shortcode('info_pagamento_completa', 'pfp_shortcode_info_completa');
 ?>

@@ -1,3 +1,35 @@
+/* Estilos para as informações de pagamento */
+.preco-parcelado,
+.preco-parcelado-listagem,
+.preco-parcelado-shortcode,
+.info-pagamento-completa {
+    font-size: 14px;
+    color: #28a745;
+    font-weight: 500;
+    margin: 8px 0;
+    line-height: 1.4;
+}
+
+.preco-parcelado-listagem {
+    font-size: 13px;
+    margin-top: 5px;
+}
+
+.info-pagamento-completa {
+    font-weight: 600;
+    color: #007cba;
+}
+
+/* Responsivo para informações de pagamento */
+@media (max-width: 768px) {
+    .preco-parcelado,
+    .preco-parcelado-listagem,
+    .info-pagamento-completa {
+        font-size: 12px;
+    }
+}
+
+/* Estilos do modal existentes */
     .backdrop-modal-parcel {
         display: none;
         justify-content: center;
